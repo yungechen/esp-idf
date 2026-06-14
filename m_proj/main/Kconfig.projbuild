@@ -1,0 +1,4 @@
+menu "My Application Settings"
+    source "../main/app.kconfig"
+    source "../bsp/bsp.kconfig"
+endmenu

@@ -1,0 +1,5 @@
+config APP_LOG_ENABLE_DEBUG_LOG
+    bool "Enable debug log output"
+    default n
+    help
+        Print extra debug information at runtime

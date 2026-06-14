@@ -1,0 +1,24 @@
+config APP_LED_SUPPORT
+    bool "Enable app_led"
+    default n
+    help
+        Enable LED SUPPORT
+
+if APP_LED_SUPPORT
+
+    menu "LED Configuration"
+        config APP_LED_PIN
+            int "LED GPIO pin"
+            default 18
+            help
+                GPIO pin number used for the LED.
+
+        config APP_LED_ACTIVE_LOW
+            bool "LED active low"
+            default n
+            help
+                Enable if the LED turns on when GPIO is low.
+
+    endmenu
+
+endif
