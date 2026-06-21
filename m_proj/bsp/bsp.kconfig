@@ -1,3 +1,16 @@
+config APP_BSP_MODULE_SUPPORT
+    bool "Enable BSP module management"
+    default y
+
+if APP_BSP_MODULE_SUPPORT
+
+config APP_BSP_MODULE
+    int "Maximum number of BSP modules"
+    default 32
+    range 1 64
+
+endif
+
 config APP_LED_SUPPORT
     bool "Enable app_led"
     default n

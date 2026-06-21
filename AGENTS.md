@@ -21,7 +21,8 @@ Repo-specific context for OpenCode sessions working on Espressif's IoT Developme
   - `idf-build-apps build -p tools/test_apps/system/build_tests/full_build -t esp32`
   - Build-dir pattern is `build_<target>_<config>` by default (`.idf_build_apps.toml`).
 - CI-style build of only test-related apps:
-  - `idf-ci build run --build-system cmake --target <target> -p components -p examples -p tools/test_apps --only-test-related`
+  - `idf-ci build run --target <target> -p components -p examples -p tools/test_apps --only-test-related`
+  - Build system and config rules are already set in `.idf_build_apps.toml`; don't pass `--build-system cmake`.
 - Generate a CI child pipeline locally:
   - `idf-ci gitlab build-child-pipeline -p components -p examples -p tools/test_apps --modified-files <files>`
 
@@ -34,6 +35,8 @@ Repo-specific context for OpenCode sessions working on Espressif's IoT Developme
   - `pytest --target linux -m "not macos"`
   - Markers describe runner hardware/capabilities; see `pytest.ini` for the full list.
 - Host/unit tests live alongside components/tools and usually run with `pytest_for_ut` (CI alias) or plain `pytest`:
+  - `pytest_for_ut` is defined in `tools/ci/utils.sh`; it disables the `idf-ci` and `pytest_embedded` plugins.
+  - Host test files are often named `test_*.py` rather than `pytest_*.py`, so they need direct file invocation or `pytest_for_ut`.
   - `cd tools/test_idf_py && pytest --noconftest test_idf_py.py`
   - `cd components/nvs_flash/nvs_partition_tool && pytest test_nvs_gen_check.py`
 - Tools/system tests sometimes require extra tools installed (e.g. `qemu-xtensa`, `qemu-riscv32`, `cmake@3.22.1`) via `tools/idf_tools.py install ...`.
@@ -44,8 +47,9 @@ Repo-specific context for OpenCode sessions working on Espressif's IoT Developme
 - Run on changed files: `pre-commit run --files <files>`
 - Run on a branch range like CI: `pre-commit run --from-ref <base> --to-ref <head> --show-diff-on-failure`
 - Skip a hook if needed: `SKIP=cleanup-ignore-lists pre-commit run ...`
-- C/C++ formatting: `tools/format.sh <files>` (uses `astyle_py` version 3.4.7; keep in sync with `.pre-commit-config.yaml`).
+- C/C++ formatting: `tools/format.sh <files>`. The `astyle` version (3.4.7) and rules must stay in sync with `.pre-commit-config.yaml`.
 - Python formatting/linting: `ruff format` and `ruff check --fix --show-fixes` (config in `ruff.toml`; line length 120, Python 3.10, single quotes).
+- Python type comments/annotations: `tools/ci/check_type_comments.py` (run by the pre-commit `mypy-check` hook).
 - CMake files: `cmakelint --linelength=120 --spaces=4 --filter=-whitespace/indent`
 - Spelling: `codespell` (uses `.codespellrc`).
 - Shell scripts: `shellcheck` on `install.sh` and `export.sh`.
@@ -75,6 +79,6 @@ If you change the source files below, regenerate and commit the outputs:
 ## Important Defaults
 
 - CI treats warnings as errors during builds (see `[local_runtime_envs]` in `.idf_ci.toml`).
-- `.idf_build_apps.toml` defines config rules (`sdkconfig.ci=default`, `sdkconfig.ci.*=`, `=default`) and common components for dependency-driven builds.
+- `.idf_build_apps.toml` defines config rules (`sdkconfig.ci=default`, `sdkconfig.ci.*=`, `=default`) and common components for dependency-driven builds; build dir pattern is `build_@t_@w` (`build_<target>_<config>`).
 - `.idf_ci.toml` controls artifact upload rules and which apps are considered test-related.
 - `pytest.ini` has many hardware/capability markers; don't assume a local run can satisfy `ethernet`, `wifi_router`, `jtag`, etc.
