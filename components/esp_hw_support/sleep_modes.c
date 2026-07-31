@@ -1170,9 +1170,12 @@ static esp_err_t SLEEP_FN_ATTR esp_sleep_start(uint32_t sleep_flags, esp_sleep_m
 #endif
 
     // Configure timer wakeup
+    bool timer_wakeup_armed = false;
     if (!should_skip_sleep && (s_config.wakeup_triggers & RTC_TIMER_TRIG_EN)) {
         if (timer_wakeup_prepare(sleep_duration) != ESP_OK) {
             should_skip_sleep = allow_sleep_rejection ? true : false;
+        } else {
+            timer_wakeup_armed = true;
         }
     }
 
@@ -1184,6 +1187,10 @@ static esp_err_t SLEEP_FN_ATTR esp_sleep_start(uint32_t sleep_flags, esp_sleep_m
 #endif
     } else {
         result = esp_sleep_start_safe(sleep_flags, reject_triggers, deep_sleep, &config);
+    }
+    if (timer_wakeup_armed) {
+        /* Disarm leftover comparator after non-timer wakeups so it cannot fire into other LP/RTC timer users. */
+        rtc_timer_hal_clear_wakeup_time(0);
     }
 #if CONFIG_ESP_SLEEP_CACHE_SAFE_ASSERTION
     if (sleep_flags & RTC_SLEEP_PD_VDDSDIO) {
@@ -1271,7 +1278,18 @@ static esp_err_t FORCE_IRAM_ATTR deep_sleep_start(bool allow_sleep_rejection)
      * to RTC memory while we calculate RTC memory CRC.
      */
     esp_os_enter_critical(&s_config.lock);
+#if CONFIG_FREERTOS_PORT_THREAD_SAFE_CLAIM
     esp_ipc_isr_stall_other_cpu();
+#else
+    /* Retry with the lock held on success. Drop the lock on failure so the other
+     * CPU can leave its critical section (and to avoid deadlock on s_config.lock).
+     */
+    while (esp_ipc_isr_stall_other_cpu_safe() != ESP_OK) {
+        esp_os_exit_critical(&s_config.lock);
+        esp_rom_delay_us(portTICK_PERIOD_MS * 1000 / 10);
+        esp_os_enter_critical(&s_config.lock);
+    }
+#endif
     esp_ipc_isr_stall_pause();
     /* Another core is stalled and interrupts are disabled, so we can safely claim the thread-safe
        critical section to avoid deadlocks and fastup the sleep process.

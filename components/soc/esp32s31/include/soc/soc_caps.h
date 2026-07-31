@@ -66,6 +66,7 @@
 #define SOC_LEDC_SUPPORTED              1
 #define SOC_I2C_SUPPORTED               1
 #define SOC_SYSTIMER_SUPPORTED          1
+#define SOC_SUPPORT_COEXISTENCE         1
 #define SOC_AES_SUPPORTED               1
 #define SOC_MPI_SUPPORTED               1
 #define SOC_SHA_SUPPORTED               1
@@ -192,6 +193,8 @@
 #define SOC_CPU_HAS_LOCKUP_RESET        1
 
 #define SOC_SIMD_PREFERRED_DATA_ALIGNMENT 16 // The preferred data alignment accepted by the SIMD instructions, in bytes
+
+#define SOC_CPU_HAS_ZC_EXTENSIONS       1
 
 /*-------------------------- DMA Common CAPS ----------------------------------------*/
 #define SOC_DMA_CAN_ACCESS_FLASH 1 /*!< DMA can access Flash memory */
@@ -683,3 +686,6 @@
 #define SOC_TEMPERATURE_SENSOR_SUPPORT_ETM                   (1)
 // temperature sensor on esp32s31 in under low power domain.
 #define SOC_TEMPERATURE_SENSOR_SUPPORT_SLEEP_RETENTION       (1)
+
+/*------------------------------------- DEBUG CAPS -------------------------------------*/
+#define SOC_DEBUG_HAVE_OCD_STUB_BINS    (1)

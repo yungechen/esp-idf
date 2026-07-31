@@ -124,6 +124,9 @@ esp_err_t esp_lcd_new_i80_bus(const esp_lcd_i80_bus_config_t *bus_config, esp_lc
 {
     esp_err_t ret = ESP_OK;
     esp_lcd_i80_bus_t *bus = NULL;
+#if CONFIG_IDF_TARGET_ESP32S31
+    bool core_clk_enabled = false;
+#endif
     ESP_RETURN_ON_FALSE(bus_config && ret_bus, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
     // although LCD_CAM can support up to 24 data lines, we restrict users to only use 8 or 16 bit width
     ESP_RETURN_ON_FALSE(bus_config->bus_width == 8 || bus_config->bus_width == 16, ESP_ERR_INVALID_ARG,
@@ -160,6 +163,10 @@ esp_err_t esp_lcd_new_i80_bus(const esp_lcd_i80_bus_config_t *bus_config, esp_lc
         if (ref_count == 0) {
             lcd_ll_enable_bus_clock(bus_id, true);
             lcd_ll_reset_register(bus_id);
+#if CONFIG_IDF_TARGET_ESP32S31
+            lcd_ll_select_core_clk_src(bus_id, LCD_CORE_CLK_SRC_DEFAULT);
+            lcd_ll_set_core_clock_divider(bus_id, 2, 0, 0);
+#endif
         }
     }
 #if I80_USE_RETENTION_LINK
@@ -185,6 +192,10 @@ esp_err_t esp_lcd_new_i80_bus(const esp_lcd_i80_bus_config_t *bus_config, esp_lc
 #endif // I80_USE_RETENTION_LINK
     // initialize HAL layer, so we can call LL APIs later
     lcd_hal_init(&bus->hal, bus_id);
+#if CONFIG_IDF_TARGET_ESP32S31
+    ESP_GOTO_ON_ERROR(esp_clk_tree_enable_src((soc_module_clk_t)LCD_CORE_CLK_SRC_DEFAULT, true), err, TAG, "core clock source enable failed");
+    core_clk_enabled = true;
+#endif
     PERIPH_RCC_ATOMIC() {
         lcd_ll_enable_clock(bus->hal.dev, true);
     }
@@ -268,6 +279,11 @@ err:
             esp_clk_tree_enable_src(bus->clk_src, false);
             bus->clk_src = SOC_MOD_CLK_INVALID;
         }
+#if CONFIG_IDF_TARGET_ESP32S31
+        if (core_clk_enabled) {
+            esp_clk_tree_enable_src((soc_module_clk_t)LCD_CORE_CLK_SRC_DEFAULT, false);
+        }
+#endif
 #if CONFIG_PM_ENABLE
         if (bus->pm_lock) {
             esp_pm_lock_delete(bus->pm_lock);
@@ -291,6 +307,9 @@ esp_err_t esp_lcd_del_i80_bus(esp_lcd_i80_bus_handle_t bus)
         esp_clk_tree_enable_src(bus->clk_src, false);
         bus->clk_src = SOC_MOD_CLK_INVALID;
     }
+#if CONFIG_IDF_TARGET_ESP32S31
+    ESP_GOTO_ON_ERROR(esp_clk_tree_enable_src((soc_module_clk_t)LCD_CORE_CLK_SRC_DEFAULT, false), err, TAG, "core clock source disable failed");
+#endif
 #if I80_USE_RETENTION_LINK
     const periph_retention_module_t module_id = lcd_i80_reg_retention_info[bus_id].retention_module;
     sleep_retention_module_detach(module_id);
@@ -651,9 +670,9 @@ static esp_err_t lcd_i80_select_periph_clock(esp_lcd_i80_bus_handle_t bus, lcd_c
     ESP_RETURN_ON_ERROR(esp_clk_tree_src_get_freq_hz((soc_module_clk_t)clk_src, ESP_CLK_TREE_SRC_FREQ_PRECISION_CACHED, &src_clk_hz),
                         TAG, "get clock source frequency failed");
     PERIPH_RCC_ATOMIC() {
-        lcd_ll_select_clk_src(bus->hal.dev, clk_src);
+        lcd_ll_select_clk_src(bus->bus_id, clk_src);
         // force to use integer division, as fractional division might lead to clock jitter
-        lcd_ll_set_group_clock_coeff(bus->hal.dev, LCD_PERIPH_CLOCK_PRE_SCALE, 0, 0);
+        lcd_ll_set_group_clock_coeff(bus->bus_id, LCD_PERIPH_CLOCK_PRE_SCALE, 0, 0);
     }
 
     // save the resolution of the i80 bus

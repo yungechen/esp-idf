@@ -164,14 +164,6 @@ static inline void periph_ll_clk_gate_set_default(soc_reset_reason_t rst_reason,
         HP_SYS_CLKRST.timergrp1_ctrl0.reg_timergrp1_t0_clk_en = 0;
         HP_SYS_CLKRST.timergrp1_ctrl0.reg_timergrp1_t1_clk_en = 0;
         HP_SYS_CLKRST.timergrp1_ctrl0.reg_timergrp1_wdt_clk_en = 0;
-        // LCDCAM
-        /*
-         * Default lcdcam_lcdcam_ctrl0:
-         *   reg_lcdcam_clk_src_sel: 1 (BBPLL 120 MHz path, shared by LCD and CAM)
-         *   reg_lcdcam_clk_div_num: 1 (divide by 2 → 60 MHz)
-         */
-        HP_SYS_CLKRST.lcdcam_lcdcam_ctrl0.reg_lcdcam_clk_src_sel = 1;
-        HP_SYS_CLKRST.lcdcam_lcdcam_ctrl0.reg_lcdcam_clk_div_num = 1;
         // ASRC
         HP_SYS_CLKRST.ahb_asrc_ctrl0.reg_ahb_asrc_sys_clk_en = 0;
         // Flash
@@ -272,6 +264,19 @@ FORCE_INLINE_ATTR void _clk_gate_ll_ref_50m_clk_en(bool enable)
     } while(0)
 
 /**
+ * Enable or disable the clock gate for ref_60m.
+ * @param  enable Enable / disable
+ */
+FORCE_INLINE_ATTR void _clk_gate_ll_ref_60m_clk_en(bool enable)
+{
+    HP_SYS_CLKRST.ref_60m_ctrl0.reg_ref_60m_clk_en = enable;
+}
+#define clk_gate_ll_ref_60m_clk_en(...) do { \
+        (void)__DECLARE_RCC_ATOMIC_ENV; \
+        _clk_gate_ll_ref_60m_clk_en(__VA_ARGS__); \
+    } while (0)
+
+/**
  * Enable or disable the clock gate for ref_80m (derived from BBPLL).
  * @param  enable Enable / disable
  */
@@ -285,6 +290,32 @@ FORCE_INLINE_ATTR void _clk_gate_ll_ref_80m_clk_en(bool enable)
         (void)__DECLARE_RCC_ATOMIC_ENV; \
         _clk_gate_ll_ref_80m_clk_en(__VA_ARGS__); \
     } while(0)
+
+/**
+ * Enable or disable the ref_80m mux clock gate.
+ * @param  en 0: disable   1: enable
+ */
+FORCE_INLINE_ATTR void _clk_gate_ll_ref_80m_mux_clk_en(bool en)
+{
+    HP_SYS_CLKRST.ref_80m_ctrl0.reg_ref_80m_mux_clk_en = en;
+}
+#define clk_gate_ll_ref_80m_mux_clk_en(...) do { \
+        (void)__DECLARE_RCC_ATOMIC_ENV; \
+        _clk_gate_ll_ref_80m_mux_clk_en(__VA_ARGS__); \
+    } while (0)
+
+/**
+ * Enable or disable the clock gate for ref_120m.
+ * @param  enable Enable / disable
+ */
+FORCE_INLINE_ATTR void _clk_gate_ll_ref_120m_clk_en(bool enable)
+{
+    HP_SYS_CLKRST.ref_120m_ctrl0.reg_ref_120m_clk_en = enable;
+}
+#define clk_gate_ll_ref_120m_clk_en(...) do { \
+        (void)__DECLARE_RCC_ATOMIC_ENV; \
+        _clk_gate_ll_ref_120m_clk_en(__VA_ARGS__); \
+    } while (0)
 
 /**
  * Enable or disable the clock gate for ref_160m (derived from BBPLL).

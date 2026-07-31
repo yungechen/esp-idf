@@ -18,7 +18,7 @@
 static uint8_t ext_adv_pattern_1[] = {
     0x02, BLE_HS_ADV_TYPE_FLAGS, 0x06,
     0x03, BLE_HS_ADV_TYPE_COMP_UUIDS16, 0xab, 0xcd,
-    0x03, BLE_HS_ADV_TYPE_COMP_UUIDS16, 0x18, 0x12,
+    0x03, BLE_HS_ADV_TYPE_COMP_UUIDS16, 0x12, 0x18,  /* UUID 0x1812 in little-endian */
     0x12, BLE_HS_ADV_TYPE_COMP_NAME, 'e', 'x', 't', '-', 'b', 'l', 'e', 'p', 'r', 'p', 'h', '-', 'l', '2', 'c', 'o', 'c',
 };
 #endif
@@ -158,15 +158,18 @@ bleprph_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
+#if CONFIG_BT_NIMBLE_GAP_SERVICE
     const char *name;
     name = ble_svc_gap_device_name();
     fields.name = (uint8_t *)name;
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
+#endif
 
-    fields.uuids16 = (ble_uuid16_t[]) {
+    static const ble_uuid16_t adv_uuids16[] = {
         BLE_UUID16_INIT(L2CAP_COC_UUID)
     };
+    fields.uuids16 = adv_uuids16;
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
 
@@ -259,7 +262,7 @@ bleprph_l2cap_coc_event_cb(struct ble_l2cap_event *event, void *arg)
             for (int i = 0; i < event->receive.sdu_rx->om_len; i++) {
                 console_printf("%d ", event->receive.sdu_rx->om_data[i]);
             }
-            os_mbuf_free(event->receive.sdu_rx);
+            os_mbuf_free_chain(event->receive.sdu_rx);
         }
         fflush(stdout);
         bleprph_l2cap_coc_accept(event->receive.conn_handle,
@@ -474,9 +477,11 @@ app_main(void)
     bleprph_l2cap_coc_mem_init();
 #endif
 
+#if CONFIG_BT_NIMBLE_GAP_SERVICE
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("bleprph-l2coc");
     assert(rc == 0);
+#endif
 
     /* XXX Need to have template for store */
     ble_store_config_init();

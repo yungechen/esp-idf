@@ -89,11 +89,13 @@ ble_spp_server_advertise(void)
     fields.tx_pwr_lvl_is_present = 1;
     fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
+#if CONFIG_BT_NIMBLE_GAP_SERVICE
     const char *name;
     name = ble_svc_gap_device_name();
     fields.name = (uint8_t *)name;
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
+#endif
 
     fields.uuids16 = (ble_uuid16_t[]) {
         BLE_UUID16_INIT(BLE_SVC_SPP_UUID16)
@@ -411,7 +413,11 @@ static void ble_spp_uart_init(void)
         .source_clk = UART_SCLK_DEFAULT,
     };
     //Install UART driver, and get the queue.
-    uart_driver_install(UART_NUM_0, 4096, 8192, 10, &spp_common_uart_queue, 0);
+    esp_err_t err = uart_driver_install(UART_NUM_0, 4096, 8192, 10, &spp_common_uart_queue, 0);
+    if (err != ESP_OK) {
+        ESP_LOGE("SPP_SERVER", "uart_driver_install failed: %d", err);
+        return;
+    }
     //Set UART parameters
     uart_param_config(UART_NUM_0, &uart_config);
     //Set UART pins
@@ -474,9 +480,11 @@ app_main(void)
     rc = gatt_svr_init();
     assert(rc == 0);
 
+#if CONFIG_BT_NIMBLE_GAP_SERVICE
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-ble-spp-svr");
     assert(rc == 0);
+#endif
 #endif
 
     /* XXX Need to have template for store */
