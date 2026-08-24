@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "esp_err.h"
+#include "esp_wifi_types_generic.h"
 #include "sdkconfig.h"
 #include "esp_log.h"
 #include "esp_check.h"
@@ -17,11 +18,8 @@
 #include "app_filemgr.h"
 #include "nvs_flash.h"
 #include "cmdmgr.h"
-#include "cmd_system.h"
-#include "cmd_nvs.h"
+#include "bsp_wifimgr.h"
 #include "cmd_ethernet.h"
-
-#include "iperf_cmd.h"
 
 static const char *TAG = "eth_example";
 
@@ -159,6 +157,9 @@ void app_main(void)
     /* Register commands */
     register_ethernet_commands();
 
+    // init WiFi Manager And Start it
+    bsp_wifimgr_init(WIFI_MODE_STA);
+    bsp_wifimgr_start();
 
     printf("\n =======================================================\n");
     printf(" |       Steps to Test Ethernet Bandwidth              |\n");

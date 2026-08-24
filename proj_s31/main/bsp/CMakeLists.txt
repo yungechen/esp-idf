@@ -1,0 +1,15 @@
+# Included by ../CMakeLists.txt. Only sources under bsp/.
+# Paths are relative to the main component directory.
+# Do not call idf_component_register here.
+
+set(BSP_SRCS
+    "bsp/bspwifi/bsp_wifimgr.c"
+    "bsp/bspwifi/bsp_wifiap.c"
+    "bsp/bspwifi/bsp_wifista.c"
+    "bsp/bspwifi/bsp_wifiapsta.c"
+)
+
+set(BSP_INCLUDE_DIRS
+    "bsp"
+    "bsp/bspwifi"
+)
