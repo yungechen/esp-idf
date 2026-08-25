@@ -128,9 +128,9 @@ void init_ethernet_and_netif(void)
         ESP_ERROR_CHECK(esp_eth_start(s_eth_handles[i]));
     }
 
-    if (xSemaphoreTake(ip_got_sem, portMAX_DELAY) != pdTRUE) {
-        ESP_LOGE(TAG, "Timeout waiting for ETH IP");
-    }
+    // if (xSemaphoreTake(ip_got_sem, portMAX_DELAY) != pdTRUE) {
+    //     ESP_LOGE(TAG, "Timeout waiting for ETH IP");
+    // }
 }
 
 void app_main(void)
@@ -158,8 +158,7 @@ void app_main(void)
     register_ethernet_commands();
 
     // init WiFi Manager And Start it
-    bsp_wifimgr_init(WIFI_MODE_STA);
-    bsp_wifimgr_start();
+    ESP_ERROR_CHECK(bsp_wifimgr_init(WIFI_MODE_STA));
 
     printf("\n =======================================================\n");
     printf(" |       Steps to Test Ethernet Bandwidth              |\n");

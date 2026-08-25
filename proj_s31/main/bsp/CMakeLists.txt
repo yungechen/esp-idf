@@ -7,6 +7,7 @@ set(BSP_SRCS
     "bsp/bspwifi/bsp_wifiap.c"
     "bsp/bspwifi/bsp_wifista.c"
     "bsp/bspwifi/bsp_wifiapsta.c"
+    "bsp/bspwifi/bsp_wificmd.c"
 )
 
 set(BSP_INCLUDE_DIRS

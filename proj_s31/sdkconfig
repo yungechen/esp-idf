@@ -3819,6 +3819,15 @@ CONFIG_WIFI_CMD_ENABLE_DEPRECATED=y
 # end of Console Command: WiFi
 
 #
+# cJSON
+#
+# default:
+CONFIG_CJSON_NESTING_LIMIT=1000
+# default:
+CONFIG_CJSON_CIRCULAR_LIMIT=10000
+# end of cJSON
+
+#
 # Iperf
 #
 # default:

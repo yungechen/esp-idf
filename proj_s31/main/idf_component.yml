@@ -1,4 +1,5 @@
 dependencies:
+  espressif/cjson: "^1.7.19"
   espressif/ethernet_init:
     version: "^1.4.1"
   espressif/iperf-cmd:
