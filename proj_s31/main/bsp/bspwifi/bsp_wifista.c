@@ -114,6 +114,14 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user)
         break;
     case WIFI_MGR_EVT_10S_TIMER:
     {
+        wifi_ap_record_t ap_info;
+        if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
+        {
+            ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d",
+                     (char *)ap_info.ssid, ap_info.rssi, ap_info.primary);
+            break;
+        }
+
         memset(g_wifi_sta_ctx.ap_info, 0, sizeof(g_wifi_sta_ctx.ap_info));
         g_wifi_sta_ctx.number = SCAN_LIST_SIZE;
         esp_err_t err = esp_wifi_scan_start(NULL, true);

@@ -26,6 +26,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "cmd_system.h"
+#include "lwip/netif.h"
+#include "lwip/inet.h"
 #include "sdkconfig.h"
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
@@ -44,6 +46,7 @@ static void register_restart(void);
 static void register_tasks(void);
 #endif
 static void register_log_level(void);
+static void register_get_netif(void);
 
 void register_system_common(void)
 {
@@ -56,6 +59,7 @@ void register_system_common(void)
 #if WITH_TASKS_INFO
     register_tasks();
 #endif
+    register_get_netif();
     register_log_level();
 }
 
@@ -224,6 +228,35 @@ static void register_tasks(void)
 }
 
 #endif // WITH_TASKS_INFO
+
+static int get_netif(int argc, char **argv)
+{
+    struct netif *netif;
+
+    for (netif = netif_list; netif; netif = netif->next) {
+        if (netif_is_up(netif)) {
+            printf("%c%c      hostname: %s\r\n", netif->name [0], netif->name [1], netif->hostname ? netif->hostname : "");
+            printf("        hwaddr:%02x:%02x:%02x:%02x:%02x:%02x\r\n", netif->hwaddr[0], netif->hwaddr[1], netif->hwaddr[2], \
+                   netif->hwaddr[3], netif->hwaddr[4], netif->hwaddr[5]);
+            printf("        inet addr: %s\r\n", inet_ntoa(netif->ip_addr));
+            printf("        mtu: %d\r\n", netif->mtu);
+        }
+    }
+
+    return 0;
+}
+
+static void register_get_netif(void)
+{
+    const esp_console_cmd_t cmd = 
+    {
+        .command = "ifconfig",
+        .help = "Get network interface information",
+        .hint = NULL,
+        .func = &get_netif,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
 
 /** log_level command changes log level via esp_log_level_set */
 
