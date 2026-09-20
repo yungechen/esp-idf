@@ -1,0 +1,17 @@
+menu "common"
+
+    config COMMON_ENABLE
+        bool "Enable common"
+        default y
+
+if COMMON_ENABLE
+
+config FTP_SERVER_SUPPORT
+    bool "Enable FTP server support"
+    default n
+    help
+        Enable FTP server support
+
+endif
+
+endmenu

@@ -3,6 +3,7 @@
 #include "iperf_cmd.h"
 #include "cmd_system.h"
 #include "cmd_nvs.h"
+#include "cmd_filemgr.h"
 #include "cmdmgr.h"
 
 #define APP_FILEMGR_HISTORY_PATH "/data/history.txt"
@@ -25,6 +26,7 @@ esp_err_t cmdmgr_init(void)
 
     register_system_common();
     register_nvs();
+    register_filemgr();
 
     // start console REPL
     ESP_ERROR_CHECK(esp_console_start_repl(repl));

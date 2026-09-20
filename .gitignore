@@ -108,3 +108,6 @@ XUNIT_RESULT*.xml
 
 # Vale
 .vale/styles/*
+
+# proj_s31 sdkconfig.old
+proj_s31/sdkconfig.old

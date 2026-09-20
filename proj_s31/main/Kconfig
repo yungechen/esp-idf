@@ -1,0 +1,13 @@
+menu "main"
+
+config MAIN_ENABLE
+    bool "Enable main"
+    default y
+
+if MAIN_ENABLE
+
+source "$IDF_PATH/proj_s31/main/common/Kconfig"
+source "$IDF_PATH/proj_s31/main/bsp/Kconfig"
+
+endif
+endmenu

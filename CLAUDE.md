@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库概况
 
-这是 Espressif ESP-IDF（IoT Development Framework）的主仓库（master 分支），包含芯片支持包、组件库、构建系统、示例与测试框架。注意：本 fork 在 `PREVIEW_TARGETS` 中包含 `esp32s31`（见 [tools/idf_py_actions/constants.py](tools/idf_py_actions/constants.py)），根目录下的 [proj_s31/](proj_s31/) 是一个 hello_world 风格的项目副本（未纳入 git 跟踪）。
+这是 Espressif ESP-IDF（IoT Development Framework）的主仓库（master 分支），包含芯片支持包、组件库、构建系统、示例与测试框架。注意：本 fork 在 `PREVIEW_TARGETS` 中包含 `esp32s31`（见 [tools/idf_py_actions/constants.py](tools/idf_py_actions/constants.py)），根目录下的 [proj_s31/](proj_s31/) 是当前活跃开发的应用项目（源自 ethernet/iperf 示例，目标 esp32s31，**未纳入 git 跟踪**），结构见下文「proj_s31 应用结构」。
 
 ## 环境准备
 
@@ -71,6 +71,19 @@ pytest --target esp32s31 -k "test_case_name"   # 按用例名过滤
 - Kconfig：各组件的 `Kconfig` 文件汇总成 menuconfig；构建产物是 `sdkconfig` 与 `sdkconfig.h`。`sdkconfig.rename` 用于配置项改名兼容。
 - 链接：组件通过 `linker.lf`（linker fragment，由 [tools/ldgen/](tools/ldgen/) 处理）控制段放置，如把代码放入 IRAM/flash。
 - Bootloader：独立的小型项目（[components/bootloader/](components/bootloader/)），不支持大部分组件。
+
+### proj_s31 应用结构
+
+当前主要开发工作在 `proj_s31/` 内，其 `main/` 组件用**拆分的 include 式 CMakeLists** 组织（`main/CMakeLists.txt` include `common/CMakeLists.txt` 与 `bsp/CMakeLists.txt`，这两个文件只设置 `COMMON_SRCS`/`BSP_SRCS`/`*_INCLUDE_DIRS` 变量，**不调用** `idf_component_register`，新增源文件要加到对应变量里）：
+
+- `main/common/`：通用模块
+  - `filemgr/`：FATFS 挂载到 `/data`（`storage` 分区，12 MB，带磨损均衡，分区表见 `proj_s31/partitions.csv`）
+  - `cmd_system/`：控制台 REPL（`cmdmgr_init()` 基于 `esp_console_new_repl_uart`，prompt `esp32>`，历史存 `/data/history.txt`）。**新控制台命令的模式**：写一个 `register_xxx()` 用 `esp_console_cmd_register()` 注册（参数解析用 argtable3，参照 `cmd_nvs.c`），然后在 `cmdmgr_init()` 或 `app_main()` 中调用
+  - `cmd_nvs/`、`ftp_server/`（实现中的 FTP server，设计文档在 `proj_s31/docs/`）
+- `main/bsp/bspwifi/`：WiFi 管理。**ops 表模式**：`bsp_wifimgr.c` 通过 `get_wifi_{sta,ap,apsta}_ops()` 取模式对应的函数表（start/stop/change_cfg/on_event），STA/AP/APSTA 三个实现文件各自注册 ops；WiFi 配置持久化在 `/data/wifi_info.json`（cJSON 解析）
+- `main/Kconfig` + `main/common/Kconfig`：项目级配置项（如 `CONFIG_FTP_SERVER_SUPPORT`），子 Kconfig 用 `source` 引入时需保证文件存在（不存在会 kconfgen 报错，可用 `orsource`）
+- 第三方依赖走组件管理器：`main/idf_component.yml` 声明（cjson、ethernet_init、iperf-cmd、wifi-cmd），锁定在 `dependencies.lock`，下载到 `managed_components/`
+- `proj_s31/docs/`：功能设计与实施计划 markdown（wifi_sta、ftp_server 等）
 
 ### 工具链目录速查
 

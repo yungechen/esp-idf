@@ -20,6 +20,9 @@
 #include "cmdmgr.h"
 #include "bsp_wifimgr.h"
 #include "cmd_ethernet.h"
+#if CONFIG_FTP_SERVER_SUPPORT
+#include "app_ftpsrv.h"
+#endif
 
 static const char *TAG = "eth_example";
 
@@ -156,6 +159,10 @@ void app_main(void)
 
     /* Register commands */
     register_ethernet_commands();
+
+#if CONFIG_FTP_SERVER_SUPPORT
+    ftp_server_init();
+#endif
 
     // init WiFi Manager And Start it
     ESP_ERROR_CHECK(bsp_wifimgr_init(WIFI_MODE_STA));
