@@ -19,6 +19,8 @@
 #include "nvs_flash.h"
 #include "cmdmgr.h"
 #include "bsp_wifimgr.h"
+#include "bsp_timer.h"
+#include "osal.h"
 #include "cmd_ethernet.h"
 #if CONFIG_FTP_SERVER_SUPPORT
 #include "app_ftpsrv.h"
@@ -148,6 +150,12 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
 
+    // Init Timer
+    ESP_ERROR_CHECK(bsp_timer_init());
+
+    // Init OSAL (register 1s timer callback before timer start)
+    osal_init();
+
     // Init File Manager
     ESP_ERROR_CHECK(app_filemgr_mount());
 
@@ -177,4 +185,6 @@ void app_main(void)
     printf(" |  5. Client: 'iperf -u -c SERVER_IP -t 60 -i 3'      |\n");
     printf(" |                                                     |\n");
     printf(" =======================================================\n\n");
+
+    ESP_ERROR_CHECK(bsp_timer_start());
 }

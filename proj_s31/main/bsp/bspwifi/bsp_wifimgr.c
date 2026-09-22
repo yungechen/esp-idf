@@ -237,13 +237,15 @@ static void wifi_mgr_idf_event_handler(void *arg, esp_event_base_t base, int32_t
         {
         case WIFI_EVENT_STA_START:
             ESP_LOGI(TAG, "STA start");
-            ctx->ops->on_event(WIFI_MGR_EVT_STA_START, ctx);
+            ctx->ops->on_event(WIFI_MGR_EVT_STA_START, ctx, event_data);
             break;
         case WIFI_EVENT_STA_CONNECTED:
+            ESP_LOGI(TAG, "STA connected");
+            ctx->ops->on_event(WIFI_MGR_EVT_STA_CONNECTED, ctx, event_data);
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
             ESP_LOGI(TAG, "STA disconnected");
-            ctx->ops->on_event(WIFI_MGR_EVT_STA_DISCONNECTED, ctx);
+            ctx->ops->on_event(WIFI_MGR_EVT_STA_DISCONNECTED, ctx, event_data);
             break;
         case WIFI_EVENT_AP_STACONNECTED:
             break;
@@ -262,30 +264,6 @@ static void wifi_mgr_idf_event_handler(void *arg, esp_event_base_t base, int32_t
         else if(id == IP_EVENT_STA_LOST_IP)
         {
 
-        }
-    }
-}
-
-static void wifi_scan_task(void *arg)
-{
-    T_WIFI_MGR_CTX *ctx = (T_WIFI_MGR_CTX *)arg;
-    if(ctx == NULL)
-    {
-        vTaskDelete(NULL);
-        return;
-    }
-
-    int cnt = 0;
-
-    while(1)
-    {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-        cnt++;
-        if(cnt >= 10)
-        {
-            ctx->ops->on_event(WIFI_MGR_EVT_10S_TIMER, ctx);
-            cnt = 0;
         }
     }
 }
@@ -356,9 +334,6 @@ esp_err_t bsp_wifimgr_init(wifi_mode_t mode)
 
     // start wifi
     ESP_ERROR_CHECK(g_wifi_mgr_ctx->ops->start());
-
-    // start wifi task
-    xTaskCreate(wifi_scan_task, "wifi_scan_task", 4096, g_wifi_mgr_ctx, 5, &g_wifi_mgr_ctx->task_handle);
 
     return ESP_OK;
 }

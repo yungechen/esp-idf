@@ -3,6 +3,7 @@
 
 #include "esp_err.h"
 #include "esp_wifi.h"
+#include "freertos/idf_additions.h"
 
 typedef enum _E_WIFI_MGR_EVENT
 {
@@ -26,12 +27,13 @@ typedef struct _T_WIFI_MGR_CFG
 
 typedef struct _T_WIFI_MGR_OPS
 {
-    wifi_mode_t  idf_mode;                                                          // wifi mode
-    esp_err_t (*start)(void);                                                       // wifi start
-    esp_err_t (*stop)(void);                                                        // wifi stop
-    void (*on_event)(E_WIFI_MGR_EVENT evt, void *user);                             // wifi event callback
-    esp_err_t (*set_cfg)(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg);    // set wifi config
-    esp_err_t (*change_cfg)(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg); // change wifi config
+    wifi_mode_t  idf_mode;                                                                  // wifi mode
+    TaskHandle_t task_handle;                                                               // task handle
+    esp_err_t    (*start)(void);                                                            // wifi start
+    esp_err_t    (*stop)(void);                                                             // wifi stop
+    void         (*on_event)(E_WIFI_MGR_EVENT evt, void *user, void *event_data);           // wifi event callback
+    esp_err_t    (*set_cfg)(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg);     // set wifi config
+    esp_err_t    (*change_cfg)(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg);  // change wifi config
 }T_WIFI_MGR_OPS;
 
 esp_err_t bsp_wifimgr_init(wifi_mode_t mode);

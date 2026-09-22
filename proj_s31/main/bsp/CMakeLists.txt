@@ -8,9 +8,13 @@ set(BSP_SRCS
     "bsp/bspwifi/bsp_wifista.c"
     "bsp/bspwifi/bsp_wifiapsta.c"
     "bsp/bspwifi/bsp_wificmd.c"
+    "bsp/gptimer/bsp_timer.c"
+    "bsp/twdt/bsp_twdt.c"
 )
 
 set(BSP_INCLUDE_DIRS
     "bsp"
     "bsp/bspwifi"
+    "bsp/gptimer"
+    "bsp/twdt"
 )

@@ -9,6 +9,7 @@ set(COMMON_SRCS
     "common/cmd_system/cmd_system.c"
     "common/cmd_system/cmd_system_common.c"
     "common/cmd_nvs/cmd_nvs.c"
+    "common/osal/osal.c"
 )
 
 if(CONFIG_SOC_DEEP_SLEEP_SUPPORTED OR CONFIG_SOC_LIGHT_SLEEP_SUPPORTED)
@@ -26,4 +27,5 @@ set(COMMON_INCLUDE_DIRS
     "common/cmd_system"
     "common/cmd_nvs"
     "common/ftp_server"
+    "common/osal"
 )

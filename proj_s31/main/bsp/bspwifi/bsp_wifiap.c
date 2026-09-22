@@ -2,7 +2,7 @@
 
 static esp_err_t bsp_wifiap_start(void);
 static esp_err_t bsp_wifiap_stop(void);
-static void bsp_wifiap_on_event(E_WIFI_MGR_EVENT evt, void *user);
+static void bsp_wifiap_on_event(E_WIFI_MGR_EVENT evt, void *user, void *data);
 
 static T_WIFI_MGR_OPS s_wifi_ap_ops = {
     .idf_mode = WIFI_MODE_AP,
@@ -21,7 +21,7 @@ static esp_err_t bsp_wifiap_stop(void)
     return ESP_OK;
 }
 
-static void bsp_wifiap_on_event(E_WIFI_MGR_EVENT evt, void *user)
+static void bsp_wifiap_on_event(E_WIFI_MGR_EVENT evt, void *user, void *data)
 {
     
 }

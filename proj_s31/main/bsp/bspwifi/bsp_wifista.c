@@ -2,10 +2,22 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_wifi_types_generic.h"
+#include "esp_mac.h"
+#include "freertos/idf_additions.h"
+#include "osal.h"
 #include "bsp_wifimgr.h"
+#include "bsp_timer.h"
+#include "portmacro.h"
 
 #define SCAN_LIST_SIZE 20
 #define MAX_CONNECT_CNT 10
+
+typedef enum _E_WIFISTA_TASK_MSGID
+{
+    WIFISTA_TASK_MSGID_START = 0,
+    WIFISTA_TASK_MSGID_1S,
+    WIFISTA_TASK_MSGID_END,
+}E_WIFISTA_TASK_MSGID;
 
 typedef struct _T_WIFI_STA_CTX
 {
@@ -22,12 +34,13 @@ static const char *TAG = "wifi_sta";
 
 static esp_err_t bsp_wifi_sta_start(void);
 static esp_err_t bsp_wifi_sta_stop(void);
-static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user);
+static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_data);
 static esp_err_t bsp_wifi_sta_set_cfg(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg);
 static esp_err_t bsp_wifi_sta_change_cfg(const T_WIFI_MGR_CFG *apcfg, const T_WIFI_MGR_CFG *stacfg);
 
 static T_WIFI_MGR_OPS s_wifi_sta_ops = {
     .idf_mode = WIFI_MODE_STA,
+    .task_handle = NULL,
     .start = bsp_wifi_sta_start,
     .stop = bsp_wifi_sta_stop,
     .on_event = bsp_wifi_sta_on_event,
@@ -93,7 +106,7 @@ static esp_err_t bsp_wifi_sta_change_cfg(const T_WIFI_MGR_CFG *apcfg, const T_WI
     return ESP_OK;
 }
 
-static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user)
+static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_data)
 {
     switch(evt)
     {
@@ -101,6 +114,9 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user)
         esp_wifi_connect();
         break;
     case WIFI_MGR_EVT_STA_CONNECTED:
+        wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
+        ESP_LOGI(TAG, "STA connected to %s (BSSID: "MACSTR", Channel: %d)", event->ssid,
+                 MAC2STR(event->bssid), event->channel);
         break;
     case WIFI_MGR_EVT_STA_DISCONNECTED:
         if(g_wifi_sta_ctx.connect_cnt <= MAX_CONNECT_CNT)
@@ -114,14 +130,31 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user)
         break;
     case WIFI_MGR_EVT_10S_TIMER:
     {
-        wifi_ap_record_t ap_info;
-        if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
-        {
-            ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d",
-                     (char *)ap_info.ssid, ap_info.rssi, ap_info.primary);
-            break;
-        }
+        break;
+    }
+    default:
+        break;
+    }
+}
 
+/**
+ * @brief get ap info or scan ap info 
+ * 
+ * @author Chen Yunge (chenyunge@roborock.com)
+ * 
+ * @warning 
+ * @note 
+ * @attention 
+*/
+static void wifi_sta_scan(void)
+{
+    wifi_ap_record_t ap_info;
+    if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
+    {
+        ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d", (char *)ap_info.ssid, ap_info.rssi, ap_info.primary);
+    }
+    else
+    {
         memset(g_wifi_sta_ctx.ap_info, 0, sizeof(g_wifi_sta_ctx.ap_info));
         g_wifi_sta_ctx.number = SCAN_LIST_SIZE;
         esp_err_t err = esp_wifi_scan_start(NULL, true);
@@ -139,14 +172,69 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user)
                        g_wifi_sta_ctx.ap_info[i].authmode);
             }
         }
-        break;
     }
+}
+
+static void wifi_sta_task(void *arg)
+{
+    T_WIFI_MGR_OPS *ops = (T_WIFI_MGR_OPS *)arg;
+    int ret = 0;
+    uint32_t notify_bits = 0;
+    uint8_t cnt_1s = 0;
+    ESP_LOGI(TAG, "start task");
+    for(;;)
+    {
+        ret = xTaskNotifyWait(0, 0xFFFFFFFF, &notify_bits, portMAX_DELAY);
+        if(ret == 0)
+        {
+            continue;
+        }
+
+        if(CHK_BIT(notify_bits, MSG_BIT(WIFISTA_TASK_MSGID_1S)))
+        {
+            cnt_1s++;
+            if(cnt_1s >= 10)
+            {// 10s scan or get ap info
+                wifi_sta_scan();
+                cnt_1s = 0;
+            }
+        }
+    }
+}
+
+/**
+ * @brief 
+ * 
+ * @author Chen Yunge (chenyunge@roborock.com)
+ * @param[in/out] arg 
+ * @return BaseType_t 
+ * 
+ * @warning 
+ * @note 
+ * @attention 
+*/
+static BaseType_t wifista_timer_cb(void *arg)
+{
+    BaseType_t ret = pdFALSE;
+    E_TIMER_TYPE type = (E_TIMER_TYPE)arg;
+    switch(type)
+    {
+    case TIMER_T_10MS:
+        break;
+    case TIMER_T_100MS:
+        break;
+    case TIMER_T_1S:
+        xTaskNotifyFromISR(s_wifi_sta_ops.task_handle, MSG_BIT(WIFISTA_TASK_MSGID_1S), eSetBits, &ret);
+        break;
     default:
         break;
     }
+    return ret;
 }
 
 T_WIFI_MGR_OPS *get_wifi_sta_ops(void)
 {
+    xTaskCreate(wifi_sta_task, "wifi_sta_task", 4096, &s_wifi_sta_ops, 5, &s_wifi_sta_ops.task_handle);
+    bsp_timer_register(TIMER_T_1S, wifista_timer_cb, (void *)TIMER_T_1S);
     return &s_wifi_sta_ops;
 }

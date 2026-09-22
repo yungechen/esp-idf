@@ -8,4 +8,4 @@ idf_component_register(SRCS "app_main.c"
                        INCLUDE_DIRS "."
                                      ${COMMON_INCLUDE_DIRS}
                                      ${BSP_INCLUDE_DIRS}
-                       PRIV_REQUIRES fatfs esp_netif esp_eth console nvs_flash spi_flash esp_driver_uart esp_driver_gpio esp_wifi esp_timer)
+                       PRIV_REQUIRES fatfs esp_netif esp_driver_gptimer esp_eth console nvs_flash spi_flash esp_driver_uart esp_driver_gpio esp_wifi esp_timer)

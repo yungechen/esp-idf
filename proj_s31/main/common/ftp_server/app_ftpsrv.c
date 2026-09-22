@@ -865,8 +865,15 @@ static void ftp_server_task(void *arg)
             continue;
         }
 
+        /* stop 用回环自连唤醒 accept 时，丢掉这次假连接 */
+        if(srv_ctx->stop_req)
+        {
+            close(fd);
+            break;
+        }
+
         if(srv_ctx->client_fd >= 0)
-        {// 
+        {
             ftp_reply(fd, "421 Server busy, please try again later\r\n");
             close(fd);
             continue;
@@ -943,6 +950,28 @@ esp_err_t ftp_server_start(T_AppFtpSrvCfg *cfg)
     return ESP_OK;
 }
 
+/* lwIP 上 shutdown(listen_fd) 不能唤醒 accept；回环自连可以，且空闲时不占 CPU。 */
+static void ftp_wake_accept(T_FTPSRV_CTX *srv_ctx)
+{
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if(fd < 0)
+    {
+        return;
+    }
+
+    struct timeval tv = { .tv_sec = 1, .tv_usec = 0 };
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+    struct sockaddr_in addr =
+    {
+        .sin_family = AF_INET,
+        .sin_port = htons(srv_ctx->port),
+        .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
+    };
+    connect(fd, (struct sockaddr *)&addr, sizeof(addr));
+    close(fd);
+}
+
 esp_err_t ftp_server_stop(uint16_t srv_idx)
 {
     if(srv_idx >= FTP_MAX_NUM)
@@ -957,15 +986,16 @@ esp_err_t ftp_server_stop(uint16_t srv_idx)
 
     T_FTPSRV_CTX *srv_ctx = s_ftpsrv_tbl[srv_idx];
     srv_ctx->stop_req = true;
-    if(srv_ctx->listen_fd >= 0)
-    {
-        shutdown(srv_ctx->listen_fd, SHUT_RDWR);
-    }
 
+    /* 有会话时打断控制连接上的 recv */
     if(srv_ctx->client_fd >= 0)
     {
         shutdown(srv_ctx->client_fd, SHUT_RDWR);
     }
+
+    /* 空闲堵在 accept 时，用回环连接唤醒（不要依赖 shutdown(listen_fd)） */
+    ftp_wake_accept(srv_ctx);
+
     xSemaphoreTake(srv_ctx->stop_sem, portMAX_DELAY);
     vSemaphoreDelete(srv_ctx->stop_sem);
     free(srv_ctx);
