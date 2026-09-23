@@ -1,0 +1,80 @@
+menu "BSP_AUDIO"
+
+config BSP_AUDIO_ENABLE
+    bool "Enable BSP_AUDIO"
+    default y
+
+if BSP_AUDIO_ENABLE
+
+    config BSP_AUDIO_I2C_NUM
+        int "I2C NUM"
+        range 0 1
+        default 0
+
+    config BSP_AUDIO_I2C_SDA_PIN
+        int "I2C SDA PIN"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 21
+
+    config BSP_AUDIO_I2C_SCL_PIN
+        int "I2C SCL PIN"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 22
+
+    config BSP_AUDIO_I2S_NUM
+        int "I2S NUM"
+        range 0 1
+        default 0
+
+    config BSP_AUDIO_I2S_MCLK_PIN
+        int "I2S MCLK PIN"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 25
+
+    config BSP_AUDIO_I2S_SCLK_PIN
+        int "I2S SCLK (BCLK) PIN"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 25
+
+    config BSP_AUDIO_I2S_ASDOUT_PIN
+        int "I2S ASDOUT PIN (codec ADC -> MCU DIN)"
+        range 0 SOC_GPIO_IN_RANGE_MAX
+        default 25
+
+    config BSP_AUDIO_I2S_LRCK_PIN
+        int "I2S LRCK (WS) PIN"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 26
+
+    config BSP_AUDIO_I2S_DSDIN_PIN
+        int "I2S DSDIN PIN (MCU DOUT -> codec DAC)"
+        range 0 SOC_GPIO_OUT_RANGE_MAX
+        default 27
+
+    config BSP_AUDIO_MIC_GAIN
+        int "MIC GAIN"
+        range 0 31
+        default 30
+
+    config BSP_AUDIO_PA_CTRL_PIN
+        int "PA CTRL PIN (-1 to disable)"
+        range -1 SOC_GPIO_OUT_RANGE_MAX
+        default 28
+
+    config BSP_AUDIO_MCLK_MULTIPLE
+        int "MCLK MULTIPLE"
+        range 1 1024
+        default 384
+
+    config BSP_AUDIO_SAMPLE_RATE
+        int "SAMPLE RATE"
+        range 8000 192000
+        default 16000
+
+    config BSP_AUDIO_VOICE_VOLUME
+        int "VOICE VOLUME"
+        range 0 100
+        default 50
+
+endif
+endmenu

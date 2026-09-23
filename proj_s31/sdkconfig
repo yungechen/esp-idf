@@ -1499,6 +1499,52 @@ CONFIG_EFUSE_MAX_BLK_LEN=256
 # end of eFuse Bit Manager
 
 #
+# ADC and ADC Calibration
+#
+# default:
+# CONFIG_ADC_ONESHOT_CTRL_FUNC_IN_IRAM is not set
+# default:
+# CONFIG_ADC_CONTINUOUS_ISR_IRAM_SAFE is not set
+# default:
+# CONFIG_ADC_ENABLE_DEBUG_LOG is not set
+# end of ADC and ADC Calibration
+
+#
+# Audio Codec Device Configuration
+#
+# default:
+# CONFIG_CODEC_I2C_BACKWARD_COMPATIBLE is not set
+# default:
+CONFIG_CODEC_ES8311_SUPPORT=y
+# default:
+CONFIG_CODEC_ES7210_SUPPORT=y
+# default:
+CONFIG_CODEC_ES7243_SUPPORT=y
+# default:
+CONFIG_CODEC_ES7243E_SUPPORT=y
+# default:
+CONFIG_CODEC_ES8156_SUPPORT=y
+# default:
+CONFIG_CODEC_AW88298_SUPPORT=y
+# default:
+CONFIG_CODEC_ES8389_SUPPORT=y
+# default:
+CONFIG_CODEC_ES8374_SUPPORT=y
+# default:
+CONFIG_CODEC_ES8388_SUPPORT=y
+# default:
+CONFIG_CODEC_TAS5805M_SUPPORT=y
+# default:
+# CONFIG_CODEC_ZL38063_SUPPORT is not set
+# default:
+# CONFIG_CODEC_CJC8910_SUPPORT is not set
+# default:
+# CONFIG_CODEC_DUMMY_SUPPORT is not set
+# default:
+# CONFIG_CODEC_DATA_ADC_SUPPORT is not set
+# end of Audio Codec Device Configuration
+
+#
 # Wireless Coexistence
 #
 # default:
@@ -1559,6 +1605,28 @@ CONFIG_GPTIMER_OBJ_CACHE_SAFE=y
 # default:
 # CONFIG_GPTIMER_ENABLE_DEBUG_LOG is not set
 # end of ESP-Driver:GPTimer Configurations
+
+#
+# ESP-Driver:I2C Configurations
+#
+# default:
+# CONFIG_I2C_ISR_IRAM_SAFE is not set
+# default:
+# CONFIG_I2C_ENABLE_DEBUG_LOG is not set
+# default:
+CONFIG_I2C_MASTER_ISR_HANDLER_IN_IRAM=y
+# end of ESP-Driver:I2C Configurations
+
+#
+# ESP-Driver:I2S Configurations
+#
+# default:
+# CONFIG_I2S_ISR_IRAM_SAFE is not set
+# default:
+# CONFIG_I2S_CTRL_FUNC_IN_IRAM is not set
+# default:
+# CONFIG_I2S_ENABLE_DEBUG_LOG is not set
+# end of ESP-Driver:I2S Configurations
 
 #
 # ESP-Driver:SD Host SDMMC Controller Configurations
@@ -3814,6 +3882,55 @@ CONFIG_MAIN_ENABLE=y
 CONFIG_COMMON_ENABLE=y
 CONFIG_FTP_SERVER_SUPPORT=y
 # end of common
+
+#
+# bsp
+#
+# default:
+CONFIG_BSP_ENABLE=y
+
+#
+# FTM_CONFIG
+#
+# default:
+CONFIG_FTM_CONFIG_ENABLE=y
+# default:
+CONFIG_FTM_RANGING_PERIOD_SEC=10
+# default:
+CONFIG_FTM_RANGING_FRM_COUNT=32
+# default:
+CONFIG_FTM_RANGING_BURST_PERIOD=2
+# default:
+CONFIG_FTM_RANGING_MAX_FAIL=3
+# end of FTM_CONFIG
+
+#
+# BSP_AUDIO
+#
+# default:
+CONFIG_BSP_AUDIO_ENABLE=y
+# default:
+CONFIG_BSP_AUDIO_I2C_NUM=0
+CONFIG_BSP_AUDIO_I2C_SDA_PIN=51
+CONFIG_BSP_AUDIO_I2C_SCL_PIN=50
+# default:
+CONFIG_BSP_AUDIO_I2S_NUM=0
+CONFIG_BSP_AUDIO_I2S_MCLK_PIN=52
+CONFIG_BSP_AUDIO_I2S_SCLK_PIN=53
+CONFIG_BSP_AUDIO_I2S_ASDOUT_PIN=54
+CONFIG_BSP_AUDIO_I2S_LRCK_PIN=55
+CONFIG_BSP_AUDIO_I2S_DSDIN_PIN=56
+# default:
+CONFIG_BSP_AUDIO_MIC_GAIN=30
+CONFIG_BSP_AUDIO_PA_CTRL_PIN=57
+# default:
+CONFIG_BSP_AUDIO_MCLK_MULTIPLE=384
+# default:
+CONFIG_BSP_AUDIO_SAMPLE_RATE=16000
+# default:
+CONFIG_BSP_AUDIO_VOICE_VOLUME=50
+# end of BSP_AUDIO
+# end of bsp
 # end of main
 
 #

@@ -1,0 +1,43 @@
+menu "bsp"
+
+config BSP_ENABLE
+    bool "Enable bsp"
+    default y
+
+if BSP_ENABLE
+
+    menu "FTM_CONFIG"
+    
+    config FTM_CONFIG_ENABLE
+        bool "Enable FTM_CONFIG"
+        depends on ESP_WIFI_FTM_ENABLE && ESP_WIFI_FTM_INITIATOR_SUPPORT
+        default y
+
+    if FTM_CONFIG_ENABLE
+
+        config FTM_RANGING_PERIOD_SEC
+            int "Ranging period (sec)"
+            range 1 60
+            default 10
+        
+        config FTM_RANGING_FRM_COUNT
+            int "Ranging frame count (16/24/32/64)"
+            range 16 64
+            default 32
+        
+        config FTM_RANGING_BURST_PERIOD
+            int "Ranging burst period"
+            range 1 10
+            default 2
+        
+        config FTM_RANGING_MAX_FAIL
+            int "Ranging max fail"
+            range 1 10
+            default 3
+    endif
+    endmenu
+
+    source "$IDF_PATH/proj_s31/main/bsp/bspaudio/Kconfig"
+
+endif
+endmenu

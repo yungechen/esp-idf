@@ -114,10 +114,14 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_
         esp_wifi_connect();
         break;
     case WIFI_MGR_EVT_STA_CONNECTED:
+    {
         wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
         ESP_LOGI(TAG, "STA connected to %s (BSSID: "MACSTR", Channel: %d)", event->ssid,
                  MAC2STR(event->bssid), event->channel);
+        
         break;
+    }
+        
     case WIFI_MGR_EVT_STA_DISCONNECTED:
         if(g_wifi_sta_ctx.connect_cnt <= MAX_CONNECT_CNT)
         {
@@ -128,8 +132,14 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_
         break;
     case WIFI_MGR_EVT_STA_GOT_IP:
         break;
-    case WIFI_MGR_EVT_10S_TIMER:
+    case WIFI_MGR_EVT_FTM_REPORT:
     {
+        ESP_LOGI(TAG, "FTM report");
+        wifi_event_ftm_report_t *event_ftm = (wifi_event_ftm_report_t *)event_data;
+        if(event_ftm->status == FTM_STATUS_SUCCESS)
+        {
+            ESP_LOGI(TAG, "FTM time: %u, dist: %u", event_ftm->rtt_est, event_ftm->dist_est);
+        }
         break;
     }
     default:
@@ -151,7 +161,23 @@ static void wifi_sta_scan(void)
     wifi_ap_record_t ap_info;
     if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
     {
-        ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d", (char *)ap_info.ssid, ap_info.rssi, ap_info.primary);
+        ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d ftm_responder=%d", (char *)ap_info.ssid, ap_info.rssi, ap_info.primary, ap_info.ftm_responder);
+
+        if(ap_info.ftm_responder == 1)
+        {
+            wifi_ftm_initiator_cfg_t ftm_initiator_cfg =
+            {
+                .frm_count = CONFIG_FTM_RANGING_FRM_COUNT,
+                .burst_period = CONFIG_FTM_RANGING_BURST_PERIOD,
+                .channel = ap_info.primary,
+            };
+            memcpy(ftm_initiator_cfg.resp_mac, ap_info.bssid, 6);
+            esp_err_t err = esp_wifi_ftm_initiate_session(&ftm_initiator_cfg);
+            if(ESP_OK != err)
+            {
+                ESP_LOGE(TAG, "esp_wifi_ftm_initiate_session failed, err=%s", esp_err_to_name(err));
+            }
+        }
     }
     else
     {

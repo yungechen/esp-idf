@@ -12,9 +12,18 @@ set(BSP_SRCS
     "bsp/twdt/bsp_twdt.c"
 )
 
+if(CONFIG_BSP_AUDIO_ENABLE)
+    list(APPEND BSP_SRCS "bsp/bspaudio/bsp_audiomgr.c")
+    list(APPEND BSP_SRCS "bsp/bspaudio/bsp_audio_cmd.c")
+endif()
+
 set(BSP_INCLUDE_DIRS
     "bsp"
     "bsp/bspwifi"
     "bsp/gptimer"
     "bsp/twdt"
 )
+if(CONFIG_BSP_AUDIO_ENABLE)
+    list(APPEND BSP_INCLUDE_DIRS "bsp/bspaudio")
+endif()
+

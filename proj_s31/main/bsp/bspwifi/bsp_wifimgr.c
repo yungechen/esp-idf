@@ -249,6 +249,9 @@ static void wifi_mgr_idf_event_handler(void *arg, esp_event_base_t base, int32_t
             break;
         case WIFI_EVENT_AP_STACONNECTED:
             break;
+        case WIFI_EVENT_FTM_REPORT:
+            ctx->ops->on_event(WIFI_MGR_EVT_FTM_REPORT, ctx, event_data);
+            break;
         default:
             break;
         }

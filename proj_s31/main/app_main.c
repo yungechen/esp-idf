@@ -25,6 +25,9 @@
 #if CONFIG_FTP_SERVER_SUPPORT
 #include "app_ftpsrv.h"
 #endif
+#if CONFIG_BSP_AUDIO_ENABLE
+#include "bsp_audiomgr.h"
+#endif
 
 static const char *TAG = "eth_example";
 
@@ -170,6 +173,10 @@ void app_main(void)
 
 #if CONFIG_FTP_SERVER_SUPPORT
     ftp_server_init();
+#endif
+
+#if CONFIG_BSP_AUDIO_ENABLE
+    ESP_ERROR_CHECK(bsp_audiomgr_init());
 #endif
 
     // init WiFi Manager And Start it

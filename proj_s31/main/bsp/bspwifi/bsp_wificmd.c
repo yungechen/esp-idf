@@ -23,7 +23,7 @@ static bool is_empty_arg(const char *s)
 }
 
 static int cmd_wifi(int argc, char **argv)
-{
+{//wifi sta Roborock-lOT rockrobo 123 123
     int nerrors = arg_parse(argc, argv, (void **)&s_wifi_args);
 
     if(nerrors != 0)
