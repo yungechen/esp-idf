@@ -1,5 +1,7 @@
 #include <inttypes.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include <string.h>
 #include "esp_log.h"
 #include "esp_event.h"
@@ -22,7 +24,8 @@ extern T_WIFI_MGR_OPS *get_wifi_apsta_ops(void);
 
 extern esp_err_t wifi_cmd_init(void);
 
-#define WIFI_INFO_DATA_PATH "/data/wifi_info.json"
+#define WIFI_INFO_DATA_PATH "/mnt/config/wifi_info.json"
+#define WIFI_INFO_DATA_DIR "/mnt/config"
 const char *TAG = "bsp_wifimgr";
 
 typedef struct _T_WIFI_MGR_CTX
@@ -284,6 +287,22 @@ static void wifi_mgr_idf_event_handler(void *arg, esp_event_base_t base, int32_t
 */
 esp_err_t bsp_wifimgr_init(wifi_mode_t mode)
 {
+    // create wifi config dir
+    struct stat st;
+    if(stat(WIFI_INFO_DATA_DIR, &st) == 0)
+    {
+        if(!S_ISDIR(st.st_mode))
+        {
+            ESP_LOGE(TAG, "WiFi config dir is not a directory");
+            return ESP_FAIL;
+        }
+    }
+    else if(mkdir(WIFI_INFO_DATA_DIR, 0755) != 0 && errno != EEXIST)
+    {
+        ESP_LOGE(TAG, "Failed to create WiFi config dir");
+        return ESP_FAIL;
+    }
+
     g_wifi_mgr_ctx = (T_WIFI_MGR_CTX *)calloc(1, sizeof(T_WIFI_MGR_CTX));
     if(g_wifi_mgr_ctx == NULL)
     {

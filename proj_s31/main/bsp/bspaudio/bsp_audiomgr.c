@@ -8,7 +8,6 @@
 #include "esp_codec_dev_types.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2s_std.h"
@@ -20,8 +19,12 @@
 #include "esp_check.h"
 #include "sdkconfig.h"
 #include "bsp_audiomgr.h"
+#include "app_filemgr.h"
+#include "esp_littlefs.h"
 
-#define MIC_FILE_PATH "/data/wav"
+#define MIC_FILE_PATH "/mnt/wav"
+
+#define MIC_CHANNEL_NUM I2S_SLOT_MODE_MONO
 
 static const char *TAG = "BSP_AUDIOMGR";
 static const char err_reason[][30] =
@@ -123,7 +126,7 @@ static esp_err_t codec_init(void)
     {
         .bits_per_sample = I2S_DATA_BIT_WIDTH_16BIT,
         .channel = 2,
-        .channel_mask = 0x03,
+        .channel_mask = 0x01,
         .sample_rate = CONFIG_BSP_AUDIO_SAMPLE_RATE,
         .mclk_multiple = CONFIG_BSP_AUDIO_MCLK_MULTIPLE,
     };
@@ -157,7 +160,7 @@ static esp_err_t i2s_driver_init(void)
     i2s_std_config_t std_cfg =
     {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(CONFIG_BSP_AUDIO_SAMPLE_RATE),
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
+        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, MIC_CHANNEL_NUM),
         .gpio_cfg = 
         {
             .mclk = CONFIG_BSP_AUDIO_I2S_MCLK_PIN,
@@ -198,7 +201,7 @@ static void i2s_task(void *args)
     int log_div = 0;
     ESP_LOGI(TAG, "i2s start (print RX stats; speak into mic to see change)");
 
-    /* Ensure /data/wav exists (create if missing) */
+    /* Ensure /mnt/wav exists (create if missing) */
     struct stat st;
     if (stat(MIC_FILE_PATH, &st) == 0) 
     {
@@ -311,25 +314,27 @@ esp_err_t audio_mic_start(int duration_sec)
     strftime(s_audio_file_path, sizeof(MIC_FILE_PATH) + 64, MIC_FILE_PATH "/rec_%Y%m%d_%H%M%S.wav", &t);
 
     //calculate wav size for duration_sec
-    uint32_t byte_rate = CONFIG_BSP_AUDIO_SAMPLE_RATE * 2 * I2S_DATA_BIT_WIDTH_16BIT / 8;
+    uint32_t byte_rate = CONFIG_BSP_AUDIO_SAMPLE_RATE * MIC_CHANNEL_NUM * I2S_DATA_BIT_WIDTH_16BIT / 8;
     s_audio_ctrl_data.wav_size = byte_rate * duration_sec;
     const uint64_t need_bytes = (uint64_t)s_audio_ctrl_data.wav_size + sizeof(wav_header_t);
 
-    /* FAT VFS does not implement statvfs(); use esp_vfs_fat_info() */
-    uint64_t total_bytes = 0;
-    uint64_t free_bytes = 0;
-    esp_err_t fs_err = esp_vfs_fat_info("/data", &total_bytes, &free_bytes);
-    if (fs_err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_vfs_fat_info failed: %s", esp_err_to_name(fs_err));
+    size_t total = 0, used = 0;
+    esp_err_t fs_err = esp_littlefs_info(APP_FILEMGR_PARTITION_LABEL, &total, &used);
+    if (fs_err != ESP_OK) 
+    {
+        ESP_LOGE(TAG, "esp_littlefs_info failed: %s", esp_err_to_name(fs_err));
         free(s_audio_file_path);
         return fs_err;
     }
+    uint64_t total_bytes = total;
+    uint64_t free_bytes = (total > used) ? (uint64_t)(total - used) : 0;
     ESP_LOGI(TAG, "disk total=%llu MB, free=%llu MB, need=%llu bytes for %d s",
              (unsigned long long)(total_bytes / (1024 * 1024)),
              (unsigned long long)(free_bytes / (1024 * 1024)),
              (unsigned long long)need_bytes,
              duration_sec);
-    if (free_bytes < need_bytes) {
+    if (free_bytes < need_bytes) 
+    {
         ESP_LOGE(TAG, "not enough space: free=%llu need=%llu",
                  (unsigned long long)free_bytes, (unsigned long long)need_bytes);
         free(s_audio_file_path);
@@ -345,7 +350,7 @@ esp_err_t audio_mic_start(int duration_sec)
         return ESP_FAIL;
     }
 
-    const wav_header_t header = WAV_HEADER_PCM_DEFAULT(s_audio_ctrl_data.wav_size, I2S_DATA_BIT_WIDTH_16BIT, CONFIG_BSP_AUDIO_SAMPLE_RATE, 2);
+    const wav_header_t header = WAV_HEADER_PCM_DEFAULT(s_audio_ctrl_data.wav_size, I2S_DATA_BIT_WIDTH_16BIT, CONFIG_BSP_AUDIO_SAMPLE_RATE, MIC_CHANNEL_NUM);
     fwrite(&header, sizeof(wav_header_t), 1, s_audio_ctrl_data.wav_file);
 
     s_audio_ctrl_data.is_mic_start = true;

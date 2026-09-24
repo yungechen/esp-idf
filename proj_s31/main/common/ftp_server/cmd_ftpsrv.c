@@ -31,7 +31,7 @@ static int cmd_ftpsrv(int argc, char **argv)
     }
 
     if(strcmp(argv[1], "start") == 0)
-    {// ftpsrv start 21 esp32 esp32 /data ftpsrv1
+    {// ftpsrv start 21 esp32 esp32 /mnt ftpsrv1
         if(argc < 6)
         {
             printf("Invalid arguments\n");
@@ -103,5 +103,16 @@ esp_err_t ftpsrv_cmd_init(void)
         .func     = &cmd_ftpsrv,
         .argtable = &s_ftpsrv_args, 
     };
+
+    T_AppFtpSrvCfg cfg = 
+    {
+        .port = 21,
+        .user = "esp32",
+        .pass = "esp32",
+        .root = "/mnt",
+        .name = "ftpsrv",
+    };
+
+    ftp_server_start(&cfg);
     return esp_console_cmd_register(&cmd);
 }

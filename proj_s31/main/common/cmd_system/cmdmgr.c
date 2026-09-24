@@ -6,7 +6,7 @@
 #include "cmd_filemgr.h"
 #include "cmdmgr.h"
 
-#define APP_FILEMGR_HISTORY_PATH "/data/history.txt"
+#define APP_FILEMGR_HISTORY_PATH "/mnt/history.txt"
 
 static const char *TAG = "cmdmgr";
 

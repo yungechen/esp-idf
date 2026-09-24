@@ -186,16 +186,16 @@ void app_main(void)
     // init WiFi Manager And Start it
     ESP_ERROR_CHECK(bsp_wifimgr_init(WIFI_MODE_STA));
 
-    printf("\n =======================================================\n");
-    printf(" |       Steps to Test Ethernet Bandwidth              |\n");
-    printf(" |                                                     |\n");
-    printf(" |  1. Enter 'help', check all supported commands      |\n");
-    printf(" |  2. Wait ESP32 to get IP from DHCP                  |\n");
-    printf(" |  3. Enter 'ethernet info', optional                 |\n");
-    printf(" |  4. Server: 'iperf -u -s -i 3'                      |\n");
-    printf(" |  5. Client: 'iperf -u -c SERVER_IP -t 60 -i 3'      |\n");
-    printf(" |                                                     |\n");
-    printf(" =======================================================\n\n");
+    // printf("\n =======================================================\n");
+    // printf(" |       Steps to Test Ethernet Bandwidth              |\n");
+    // printf(" |                                                     |\n");
+    // printf(" |  1. Enter 'help', check all supported commands      |\n");
+    // printf(" |  2. Wait ESP32 to get IP from DHCP                  |\n");
+    // printf(" |  3. Enter 'ethernet info', optional                 |\n");
+    // printf(" |  4. Server: 'iperf -u -s -i 3'                      |\n");
+    // printf(" |  5. Client: 'iperf -u -c SERVER_IP -t 60 -i 3'      |\n");
+    // printf(" |                                                     |\n");
+    // printf(" =======================================================\n\n");
 
     ESP_ERROR_CHECK(bsp_timer_start());
 }

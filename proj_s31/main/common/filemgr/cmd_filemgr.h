@@ -1,4 +1,4 @@
-/* Console commands for browsing the /data filesystem (ls/cd/pwd).
+/* Console commands for browsing the /mnt filesystem (ls/cd/pwd).
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 

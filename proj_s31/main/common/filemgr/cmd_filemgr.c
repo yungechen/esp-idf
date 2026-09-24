@@ -1,8 +1,8 @@
-/* Console commands for browsing the /data filesystem (ls/cd/pwd).
+/* Console commands for browsing the /mnt filesystem (ls/cd/pwd).
 
    The console prompt is fixed at startup, so a current-working-directory
    state is kept here and cd/pwd operate on it. All paths are jailed
-   under APP_FILEMGR_MOUNT_PATH (/data): ".." at the root stays at the root.
+   under APP_FILEMGR_MOUNT_PATH (/mnt): ".." at the root stays at the root.
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 
@@ -40,10 +40,10 @@ static struct {
     struct arg_end *end;
 } cd_args;
 
-/* Normalize `arg` (absolute under /data, or relative to `cwd`) into an
+/* Normalize `arg` (absolute under /mnt, or relative to `cwd`) into an
  * absolute path under APP_FILEMGR_MOUNT_PATH, resolving "." and "..".
  * ".." at the mount root stays at the root (jail). Returns false if the
- * input is an absolute path outside /data, or the result doesn't fit. */
+ * input is an absolute path outside /mnt, or the result doesn't fit. */
 static bool normalize_path(const char *cwd, const char *arg, char *out, size_t out_len)
 {
     char joined[FILEMGR_PATH_MAX];
@@ -53,7 +53,7 @@ static bool normalize_path(const char *cwd, const char *arg, char *out, size_t o
             arg = APP_FILEMGR_MOUNT_PATH;
         } else if (strncmp(arg, APP_FILEMGR_MOUNT_PATH "/", strlen(APP_FILEMGR_MOUNT_PATH) + 1) != 0
                    && strcmp(arg, APP_FILEMGR_MOUNT_PATH) != 0) {
-            return false;   /* absolute path outside /data */
+            return false;   /* absolute path outside /mnt */
         }
         if (strlcpy(joined, arg, sizeof(joined)) >= sizeof(joined)) {
             return false;
@@ -227,11 +227,11 @@ void register_filemgr(void)
 
     const esp_console_cmd_t ls_cmd = {
         .command = "ls",
-        .help = "List directory contents under /data.\n"
+        .help = "List directory contents under /mnt.\n"
         "Examples:\n"
         " ls \n"
         " ls -l subdir \n"
-        " ls /data \n",
+        " ls /mnt \n",
         .hint = NULL,
         .func = &do_ls,
         .argtable = &ls_args
@@ -239,8 +239,8 @@ void register_filemgr(void)
 
     const esp_console_cmd_t cd_cmd = {
         .command = "cd",
-        .help = "Change current directory (restricted to /data).\n"
-        "Examples: cd subdir, cd .., cd /data",
+        .help = "Change current directory (restricted to /mnt).\n"
+        "Examples: cd subdir, cd .., cd /mnt",
         .hint = NULL,
         .func = &do_cd,
         .argtable = &cd_args

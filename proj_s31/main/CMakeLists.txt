@@ -1,8 +1,9 @@
 include(${CMAKE_CURRENT_LIST_DIR}/common/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/bsp/CMakeLists.txt)
 
+# Component name == directory name under proj_s31/thirdparty/ (EXTRA_COMPONENT_DIRS).
 set(MAIN_PRIV_REQUIRES
-    fatfs esp_netif esp_driver_gptimer esp_eth console nvs_flash spi_flash
+    littlefs esp_netif esp_driver_gptimer esp_eth console nvs_flash spi_flash
     esp_driver_uart esp_driver_gpio esp_wifi esp_timer
     esp_driver_i2c esp_driver_i2s esp_codec_dev
 )
