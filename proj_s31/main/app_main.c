@@ -22,6 +22,7 @@
 #include "bsp_timer.h"
 #include "osal.h"
 #include "cmd_ethernet.h"
+#include "common_sntp.h"
 #if CONFIG_FTP_SERVER_SUPPORT
 #include "app_ftpsrv.h"
 #endif
@@ -167,6 +168,9 @@ void app_main(void)
 
     // init Ethernet and netif
     init_ethernet_and_netif();
+
+    // init SNTP
+    ESP_ERROR_CHECK(common_sntp_init());
 
     /* Register commands */
     register_ethernet_commands();

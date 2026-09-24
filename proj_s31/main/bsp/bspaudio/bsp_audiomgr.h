@@ -9,7 +9,7 @@ extern "C" {
 #include "format_wav.h"
 esp_err_t bsp_audiomgr_init(void);
 
-esp_err_t audio_mic_start(int time);
+esp_err_t audio_mic_start(int duration_sec);
 
 #ifdef __cplusplus
 }

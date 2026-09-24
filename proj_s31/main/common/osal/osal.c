@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <inttypes.h>
+#include <time.h>
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -181,6 +182,22 @@ void mem_print(void)
         total_elapsed = total_runtime - s_prev_total_runtime;
     }
 #endif
+
+    time_t now = time(NULL);
+    struct tm t;
+    localtime_r(&now, &t);
+
+    char *time_str = calloc(64, sizeof(char));
+    if (!time_str)
+    {
+        ESP_LOGE(TAG, "No memory for wav file path");
+        return;
+    }
+    strftime(time_str, 64, "--------%Y%m%d_%H%M%S---------------", &t);
+
+    ESP_LOGI(TAG, "%s", time_str);
+    free(time_str);
+    time_str = NULL;
 
     ESP_LOGI(TAG, "---- tasks (%u) ----", (unsigned)count);
 #if CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS

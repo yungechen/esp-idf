@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "driver/i2s_types.h"
 #include "es8311_codec.h"
 #include "esp_codec_dev_types.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "esp_vfs_fat.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2s_std.h"
@@ -33,7 +35,6 @@ static i2s_chan_handle_t tx_handle = NULL;
 
 typedef struct _T_AUDIO_CTRL_DATA
 {
-    char wav_file_path[128];
     FILE *wav_file;
     volatile bool is_mic_start;
     volatile uint32_t wav_size;
@@ -41,7 +42,6 @@ typedef struct _T_AUDIO_CTRL_DATA
 }T_AUDIO_CTRL_DATA;
 static T_AUDIO_CTRL_DATA s_audio_ctrl_data =
 {
-    .wav_file_path = {0},
     .wav_file = NULL,
     .is_mic_start = false,
     .wav_size = 0,
@@ -157,7 +157,7 @@ static esp_err_t i2s_driver_init(void)
     i2s_std_config_t std_cfg =
     {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(CONFIG_BSP_AUDIO_SAMPLE_RATE),
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
+        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
         .gpio_cfg = 
         {
             .mclk = CONFIG_BSP_AUDIO_I2S_MCLK_PIN,
@@ -226,7 +226,10 @@ static void i2s_task(void *args)
         }
 
         // write to wav file
-        fwrite(mic_data, bytes_read, 1, s_audio_ctrl_data.wav_file);
+        if(fwrite(mic_data, bytes_read, 1, s_audio_ctrl_data.wav_file) != 1)
+        {
+            ESP_LOGE(TAG, "fwrite failed: errno=%d (%s)", errno, strerror(errno));
+        }
 
         s_audio_ctrl_data.wav_written += bytes_read;
 
@@ -291,22 +294,56 @@ static void i2s_task(void *args)
     vTaskDelete(NULL);
 }
 
-esp_err_t audio_mic_start(int time)
+esp_err_t audio_mic_start(int duration_sec)
 {
     // create wav file
-    snprintf(s_audio_ctrl_data.wav_file_path, sizeof(s_audio_ctrl_data.wav_file_path), "%s/mic_%04lu.wav", MIC_FILE_PATH, (unsigned long)xTaskGetTickCount());
+    time_t now = time(NULL);
+    struct tm t;
+    localtime_r(&now, &t);
+
+    char *s_audio_file_path = calloc(sizeof(MIC_FILE_PATH) + 64, sizeof(char));
+    if (!s_audio_file_path)
+    {
+        ESP_LOGE(TAG, "No memory for wav file path");
+        return ESP_FAIL;
+    }
+
+    strftime(s_audio_file_path, sizeof(MIC_FILE_PATH) + 64, MIC_FILE_PATH "/rec_%Y%m%d_%H%M%S.wav", &t);
+
+    //calculate wav size for duration_sec
+    uint32_t byte_rate = CONFIG_BSP_AUDIO_SAMPLE_RATE * 2 * I2S_DATA_BIT_WIDTH_16BIT / 8;
+    s_audio_ctrl_data.wav_size = byte_rate * duration_sec;
+    const uint64_t need_bytes = (uint64_t)s_audio_ctrl_data.wav_size + sizeof(wav_header_t);
+
+    /* FAT VFS does not implement statvfs(); use esp_vfs_fat_info() */
+    uint64_t total_bytes = 0;
+    uint64_t free_bytes = 0;
+    esp_err_t fs_err = esp_vfs_fat_info("/data", &total_bytes, &free_bytes);
+    if (fs_err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_vfs_fat_info failed: %s", esp_err_to_name(fs_err));
+        free(s_audio_file_path);
+        return fs_err;
+    }
+    ESP_LOGI(TAG, "disk total=%llu MB, free=%llu MB, need=%llu bytes for %d s",
+             (unsigned long long)(total_bytes / (1024 * 1024)),
+             (unsigned long long)(free_bytes / (1024 * 1024)),
+             (unsigned long long)need_bytes,
+             duration_sec);
+    if (free_bytes < need_bytes) {
+        ESP_LOGE(TAG, "not enough space: free=%llu need=%llu",
+                 (unsigned long long)free_bytes, (unsigned long long)need_bytes);
+        free(s_audio_file_path);
+        return ESP_ERR_NO_MEM;
+    }
 
     /* Open wav file */
-    s_audio_ctrl_data.wav_file = fopen(s_audio_ctrl_data.wav_file_path, "wb");
+    s_audio_ctrl_data.wav_file = fopen(s_audio_file_path, "wb");
+    free(s_audio_file_path);
     if (!s_audio_ctrl_data.wav_file)
     {
         ESP_LOGE(TAG, "create wav file failed");
         return ESP_FAIL;
     }
-
-    //calculate wav size in 10s
-    uint32_t byte_rate = CONFIG_BSP_AUDIO_SAMPLE_RATE * 2 * I2S_DATA_BIT_WIDTH_16BIT / 8;
-    s_audio_ctrl_data.wav_size = byte_rate * time;
 
     const wav_header_t header = WAV_HEADER_PCM_DEFAULT(s_audio_ctrl_data.wav_size, I2S_DATA_BIT_WIDTH_16BIT, CONFIG_BSP_AUDIO_SAMPLE_RATE, 2);
     fwrite(&header, sizeof(wav_header_t), 1, s_audio_ctrl_data.wav_file);
