@@ -1,0 +1,8 @@
+# Local vendored copy of espressif/ethernet_init 1.4.1.
+# PHY drivers are not fetched from the registry. Only yt8531 is linked
+# via CMake PRIV_REQUIRES when CONFIG_ETHERNET_PHY_YT8531 is set.
+dependencies:
+  idf:
+    version: '>=5.4.3,!=5.5.0,!=5.5.1'
+description: This component initializes Ethernet driver based on Espressif IoT Development Framework Configuration.
+version: 1.4.1

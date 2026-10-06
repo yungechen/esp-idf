@@ -132,6 +132,7 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_
         break;
     case WIFI_MGR_EVT_STA_GOT_IP:
         break;
+#if CONFIG_FTM_CONFIG_ENABLE
     case WIFI_MGR_EVT_FTM_REPORT:
     {
         ESP_LOGI(TAG, "FTM report");
@@ -142,6 +143,7 @@ static void bsp_wifi_sta_on_event(E_WIFI_MGR_EVENT evt, void *user, void *event_
         }
         break;
     }
+#endif
     default:
         break;
     }
@@ -162,7 +164,7 @@ static void wifi_sta_scan(void)
     if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
     {
         ESP_LOGI(TAG, "connected AP: %-32.32s  rssi=%4d  ch=%3d ftm_responder=%d", (char *)ap_info.ssid, ap_info.rssi, ap_info.primary, ap_info.ftm_responder);
-
+#if CONFIG_FTM_CONFIG_ENABLE
         if(ap_info.ftm_responder == 1)
         {
             wifi_ftm_initiator_cfg_t ftm_initiator_cfg =
@@ -178,6 +180,7 @@ static void wifi_sta_scan(void)
                 ESP_LOGE(TAG, "esp_wifi_ftm_initiate_session failed, err=%s", esp_err_to_name(err));
             }
         }
+#endif
     }
     else
     {

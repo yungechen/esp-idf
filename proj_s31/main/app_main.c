@@ -12,17 +12,19 @@
 #include "esp_check.h"
 #include "esp_console.h"
 #include "esp_event.h"
-#include "esp_eth.h"
 #include "esp_netif.h"
-#include "ethernet_init.h"
 #include "app_filemgr.h"
 #include "nvs_flash.h"
 #include "cmdmgr.h"
 #include "bsp_wifimgr.h"
 #include "bsp_timer.h"
 #include "osal.h"
-#include "cmd_ethernet.h"
 #include "common_sntp.h"
+#if CONFIG_APP_INIT_ETHERNET
+#include "esp_eth.h"
+#include "ethernet_init.h"
+#include "cmd_ethernet.h"
+#endif
 #if CONFIG_FTP_SERVER_SUPPORT
 #include "app_ftpsrv.h"
 #endif
@@ -32,6 +34,7 @@
 
 static const char *TAG = "eth_example";
 
+#if CONFIG_APP_INIT_ETHERNET
 static esp_eth_handle_t *s_eth_handles = NULL;
 static uint8_t s_eth_port_cnt = 0;
 
@@ -101,15 +104,12 @@ void init_ethernet_and_netif(void)
         return;
     }
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
     ESP_ERROR_CHECK(ethernet_init_all(&s_eth_handles, &s_eth_port_cnt));
 
     for (int i = 0; i < s_eth_port_cnt; i++) {
         ESP_ERROR_CHECK(eth_phy_yt8531_specific_init(s_eth_handles[i]));
     }
 
-    ESP_ERROR_CHECK(esp_netif_init());
     esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
     esp_netif_config_t cfg_spi = {
         .base = &esp_netif_config,
@@ -141,6 +141,7 @@ void init_ethernet_and_netif(void)
     //     ESP_LOGE(TAG, "Timeout waiting for ETH IP");
     // }
 }
+#endif /* CONFIG_APP_INIT_ETHERNET */
 
 void app_main(void)
 {
@@ -166,14 +167,18 @@ void app_main(void)
     // Init Command Manager
     ESP_ERROR_CHECK(cmdmgr_init());
 
-    // init Ethernet and netif
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(esp_netif_init());
+
+#if CONFIG_APP_INIT_ETHERNET
     init_ethernet_and_netif();
+    register_ethernet_commands();
+#else
+    ESP_LOGW(TAG, "Ethernet init skipped (CONFIG_APP_INIT_ETHERNET=n)");
+#endif
 
     // init SNTP
     ESP_ERROR_CHECK(common_sntp_init());
-
-    /* Register commands */
-    register_ethernet_commands();
 
 #if CONFIG_FTP_SERVER_SUPPORT
     ftp_server_init();

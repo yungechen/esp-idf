@@ -6,6 +6,19 @@ config MAIN_ENABLE
 
 if MAIN_ENABLE
 
+    config APP_INIT_ETHERNET
+        bool "Initialize Ethernet at startup"
+        default n
+        help
+            If enabled, app_main() initializes the Ethernet driver (thirdparty/ethernet_init
+            + yt8531) and registers ethernet console commands. Disable to boot without
+            touching EMAC/PHY.
+
+    config APP_DISABLE_ETHERNET_INIT_COMPONENT
+        bool
+        default y if !APP_INIT_ETHERNET
+        select ETHERNET_INIT_OVERRIDE_DISABLE if !APP_INIT_ETHERNET
+
 source "$IDF_PATH/proj_s31/main/common/Kconfig"
 source "$IDF_PATH/proj_s31/main/bsp/Kconfig"
 
