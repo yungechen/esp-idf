@@ -1,0 +1,72 @@
+{
+  "button": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "4.2.1"
+  },
+  "cmake_utilities": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "1.1.1"
+  },
+  "esp32_s31_korvo_1": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "1.0.1"
+  },
+  "esp_cam_sensor": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "2.2.0"
+  },
+  "esp_lcd_touch": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/esp_lcd_touch/1.2.1/espressif__esp_lcd_touch-v1.2.1.zip",
+    "version": "1.2.1"
+  },
+  "esp_lcd_touch_gt1151": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/esp_lcd_touch_gt1151/1.1.1/espressif__esp_lcd_touch_gt1151-v1.1.1.zip",
+    "version": "1.1.1"
+  },
+  "esp_lvgl_port": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/esp_lvgl_port/2.9.0/espressif__esp_lvgl_port-v2.9.0.zip",
+    "version": "2.9.0"
+  },
+  "esp_sccb_intf": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "0.0.9"
+  },
+  "esp_video": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "2.2.0"
+  },
+  "led_indicator": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/led_indicator/2.1.2/espressif__led_indicator-v2.1.2.zip",
+    "version": "2.1.2"
+  },
+  "led_strip": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/led_strip/3.0.0/espressif__led_strip-v3.0.0.zip",
+    "version": "3.0.0"
+  },
+  "lvgl": {
+    "namespace": "lvgl",
+    "url": "https://components-file.espressif.com/components/lvgl/lvgl/9.6.0/lvgl__lvgl-v9.6.0.zip",
+    "version": "9.6.0"
+  },
+  "usb": {
+    "namespace": "espressif",
+    "url": "https://components-file.espressif.com/components/espressif/usb/1.5.0/espressif__usb-v1.5.0.zip",
+    "version": "1.5.0"
+  },
+  "usb_host_uvc": {
+    "namespace": "espressif",
+    "url": "",
+    "version": "2.5.0"
+  }
+}

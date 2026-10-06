@@ -1,0 +1,5 @@
+# Local vendored copy of espressif/yt8531 0.2.0. No registry dependencies.
+dependencies:
+  idf: '>=6.1'
+description: YT8531 Ethernet PHY Driver
+version: 0.2.0
